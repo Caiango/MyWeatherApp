@@ -4,4 +4,11 @@
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
     <string name="unidade_de_temperatura">UNIDADE DE TEMPERATURA</string>
+    <string name="salvar">salvar</string>
+    <string name="english">English</string>
+    <string name="portugu_s">Português</string>
+    <string name="idioma">IDIOMA</string>
+    <string name="f">F</string>
+    <string name="c">C</string>
+    <string name="settings">Settings</string>
 </resources>
