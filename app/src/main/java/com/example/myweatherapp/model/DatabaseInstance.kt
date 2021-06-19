@@ -1,4 +1,4 @@
-package com.example.myweatherapp.db
+package com.example.myweatherapp.model
 
 import android.content.Context
 import androidx.room.Database

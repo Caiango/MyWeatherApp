@@ -8,26 +8,27 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.Button
+import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myweatherapp.R
-import com.example.myweatherapp.WeatherAdapter
+import com.example.myweatherapp.data.Lista
 import com.example.myweatherapp.data.Resp
 import com.example.myweatherapp.databinding.FragmentHomeBinding
-import com.example.myweatherapp.db.DatabaseInstance
-import com.example.myweatherapp.db.FavouriteCity
-import com.example.myweatherapp.db.FavouriteCityDao
-import com.example.myweatherapp.repository.RetrofitInitializer
+import com.example.myweatherapp.model.DatabaseInstance
+import com.example.myweatherapp.model.FavouriteCity
+import com.example.myweatherapp.model.FavouriteCityDao
+import com.example.myweatherapp.service.Call
+import com.example.myweatherapp.ui.adapter.WeatherAdapter
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import retrofit2.Callback
-import retrofit2.Response
 
 
 class HomeFragment : Fragment() {
@@ -35,14 +36,13 @@ class HomeFragment : Fragment() {
     private lateinit var homeViewModel: HomeViewModel
     private var _binding: FragmentHomeBinding? = null
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
     private lateinit var btnSearch: Button
     private lateinit var progressbar: ProgressBar
     private lateinit var inputCity: TextInputLayout
     private lateinit var recycler: RecyclerView
     private lateinit var adapter: WeatherAdapter
+    private lateinit var cityList: List<Lista>
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,17 +62,6 @@ class HomeFragment : Fragment() {
         recycler.setHasFixedSize(true)
         setListeners(root.context)
 
-        val db: FavouriteCityDao? = DatabaseInstance.getInstance(this.requireContext())?.weatherDao
-        lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                db?.insert(FavouriteCity(1, "CIDADE", "23", "IMG"))
-                Log.d("LISTA DO DAO", db?.getAllFavouriteCities().toString())
-            }
-            withContext(Dispatchers.Main) {
-                progressbar.visibility = View.VISIBLE
-            }
-        }
-
         return root
     }
 
@@ -84,7 +73,7 @@ class HomeFragment : Fragment() {
                     inputCity.editText?.error = "Insira uma Cidade"
                 } else {
                     progressbar.visibility = View.VISIBLE
-                    call(cidade, context)
+                    Call.call(cidade, context, this::callBackFromSearch)
                 }
             } else {
                 Toast.makeText(context, "Sem conexão com internet", Toast.LENGTH_LONG).show()
@@ -92,35 +81,10 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun call(cidade: String, context: Context) {
-        val call = RetrofitInitializer().repoService().getWeather(cidade)
-
-        call.enqueue(object : Callback<Resp> {
-            override fun onResponse(call: retrofit2.Call<Resp>, resp: Response<Resp>) {
-                resp?.body()?.let {
-                    val reponse: Resp = it
-                    callBackFromSearch(reponse, context, true)
-
-//                    val db = DatabaseInstance.getInstance(context)
-//                    lifecycleScope.launch {
-//                        db?.weatherDao()?.getAllFavouriteCities()
-//                        Log.d("LISTA DO DAO", db?.weatherDao()?.getAllFavouriteCities().toString())
-//                    }
-
-                }
-            }
-
-            override fun onFailure(call: retrofit2.Call<Resp>, t: Throwable) {
-                Log.d("erro", t.toString())
-                callBackFromSearch(null, context, false)
-            }
-
-        })
-    }
-
     fun callBackFromSearch(response: Resp?, context: Context, success: Boolean) {
         if (success) {
-            adapter = WeatherAdapter(response!!.list, context)
+            cityList = response!!.list
+            adapter = WeatherAdapter(response.list, this::setFavourite, context)
             recycler.adapter = adapter
             progressbar.visibility = View.INVISIBLE
         } else {
@@ -128,6 +92,27 @@ class HomeFragment : Fragment() {
         }
     }
 
+    fun setFavourite(position: Int) {
+        val db: FavouriteCityDao? = DatabaseInstance.getInstance(this.requireContext())?.weatherDao
+        val element = cityList[position]
+        progressbar.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                db?.insert(
+                    FavouriteCity(
+                        element.id,
+                        element.name,
+                        element.main.temp,
+                        element.weather[0].icon
+                    )
+                )
+                Log.d("SUCESSO INSERÇÃO", db?.getAllFavouriteCities().toString())
+            }
+            withContext(Dispatchers.Main) {
+                progressbar.visibility = View.INVISIBLE
+            }
+        }
+    }
 
     fun isInternetAvailable(context: Context): Boolean {
         var result = false
