@@ -18,6 +18,7 @@ import com.example.myweatherapp.R
 import com.example.myweatherapp.databinding.FragmentHomeBinding
 import com.example.myweatherapp.repository.City
 import com.example.myweatherapp.repository.RetrofitInitializer
+import com.google.android.material.textfield.TextInputLayout
 import retrofit2.Callback
 import retrofit2.Response
 
@@ -34,6 +35,7 @@ class HomeFragment : Fragment() {
     private lateinit var progressbar: ProgressBar
     private lateinit var cityName: TextView
     private lateinit var cityID: TextView
+    private lateinit var inputCity: TextInputLayout
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,6 +51,7 @@ class HomeFragment : Fragment() {
         progressbar = root.findViewById(R.id.progressBar)
         cityID = root.findViewById(R.id.txtId)
         cityName = root.findViewById(R.id.txtName)
+        inputCity = root.findViewById(R.id.txtxInputCity)
         setListeners(root.context)
 
         return root
@@ -57,16 +60,21 @@ class HomeFragment : Fragment() {
     private fun setListeners(context: Context) {
         btnSearch.setOnClickListener {
             if (isInternetAvailable(context)) {
-                call()
+                val cidade = inputCity.editText?.text.toString()
+                if (cidade.equals("")) {
+                    inputCity.editText?.error = "Insira uma Cidade"
+                } else {
+                    call(cidade)
+                }
             } else {
                 Toast.makeText(context, "Sem conexão com internet", Toast.LENGTH_LONG).show()
             }
         }
     }
 
-    private fun call() {
+    private fun call(cidade: String) {
         progressbar.visibility = View.VISIBLE
-        val call = RetrofitInitializer().repoService().getWeather("Recife")
+        val call = RetrofitInitializer().repoService().getWeather(cidade)
 
         call.enqueue(object : Callback<City> {
             override fun onResponse(call: retrofit2.Call<City>, response: Response<City>) {
