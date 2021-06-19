@@ -8,15 +8,15 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.myweatherapp.R
+import com.example.myweatherapp.WeatherAdapter
+import com.example.myweatherapp.data.Resp
 import com.example.myweatherapp.databinding.FragmentHomeBinding
-import com.example.myweatherapp.repository.City
 import com.example.myweatherapp.repository.RetrofitInitializer
 import com.google.android.material.textfield.TextInputLayout
 import retrofit2.Callback
@@ -33,9 +33,9 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var btnSearch: Button
     private lateinit var progressbar: ProgressBar
-    private lateinit var cityName: TextView
-    private lateinit var cityID: TextView
     private lateinit var inputCity: TextInputLayout
+    private lateinit var recycler: RecyclerView
+    private lateinit var adapter: WeatherAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,11 +47,12 @@ class HomeFragment : Fragment() {
 
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
-        btnSearch = root.findViewById<Button>(R.id.btnSearch)
+        btnSearch = root.findViewById(R.id.btnSearch)
         progressbar = root.findViewById(R.id.progressBar)
-        cityID = root.findViewById(R.id.txtId)
-        cityName = root.findViewById(R.id.txtName)
         inputCity = root.findViewById(R.id.txtxInputCity)
+        recycler = root.findViewById(R.id.rv)
+        recycler.layoutManager = LinearLayoutManager(root.context)
+        recycler.setHasFixedSize(true)
         setListeners(root.context)
 
         return root
@@ -64,7 +65,7 @@ class HomeFragment : Fragment() {
                 if (cidade.equals("")) {
                     inputCity.editText?.error = "Insira uma Cidade"
                 } else {
-                    call(cidade)
+                    call(cidade, context)
                 }
             } else {
                 Toast.makeText(context, "Sem conexão com internet", Toast.LENGTH_LONG).show()
@@ -72,21 +73,21 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun call(cidade: String) {
+    private fun call(cidade: String, context: Context) {
         progressbar.visibility = View.VISIBLE
         val call = RetrofitInitializer().repoService().getWeather(cidade)
 
-        call.enqueue(object : Callback<City> {
-            override fun onResponse(call: retrofit2.Call<City>, response: Response<City>) {
-                response?.body()?.let {
-                    val city: City = it
-                    cityName.text = "Nome: ${city.list[0].name}"
-                    cityID.text = "ID: ${city.list[0].id.toString()}"
+        call.enqueue(object : Callback<Resp> {
+            override fun onResponse(call: retrofit2.Call<Resp>, resp: Response<Resp>) {
+                resp?.body()?.let {
+                    val reponse: Resp = it
+                    adapter = WeatherAdapter(reponse.list, context)
+                    recycler.adapter = adapter
                     progressbar.visibility = View.INVISIBLE
                 }
             }
 
-            override fun onFailure(call: retrofit2.Call<City>, t: Throwable) {
+            override fun onFailure(call: retrofit2.Call<Resp>, t: Throwable) {
                 Log.d("erro", t.toString())
                 progressbar.visibility = View.INVISIBLE
             }
