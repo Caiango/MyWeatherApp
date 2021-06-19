@@ -9,6 +9,5 @@ import retrofit2.http.Query
 interface Service {
 
     @GET("find?APPID=${Constants.key}")
-    //fun getWeather(@Query("q") city: String?): Call<Resp>
     fun getWeather(@Query("q") city: String?, @Query("units") param2: String? = "metric"): Call<Resp>
 }
