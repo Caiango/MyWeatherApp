@@ -10,7 +10,6 @@ import android.widget.Button
 import android.widget.RadioButton
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.myweatherapp.R
 import com.example.myweatherapp.databinding.SettingsFragmentBinding
@@ -48,12 +47,6 @@ class SettingsFragment : Fragment() {
         editor = sharedPref.edit()
         setupUI(root)
         checkShared()
-
-        //val textView: TextView = binding.textNotifications
-        settingsViewModel.text.observe(viewLifecycleOwner, Observer {
-            //textView.text = it
-        })
-
         return root
     }
 
@@ -93,7 +86,6 @@ class SettingsFragment : Fragment() {
             apply()
         }
         Toast.makeText(context, "SALVO", Toast.LENGTH_LONG).show()
-
     }
 
     override fun onDestroyView() {
