@@ -1,6 +1,7 @@
 package com.example.myweatherapp.ui.favourite
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myweatherapp.R
 import com.example.myweatherapp.data.RespFromID
 import com.example.myweatherapp.databinding.FragmentFavouriteBinding
 import com.example.myweatherapp.model.DatabaseInstance
@@ -35,6 +37,7 @@ class FavouriteFragment : Fragment() {
     private lateinit var favouriteList: List<FavouriteCity>
     private lateinit var favouriteListToAdapter: ArrayList<FavouriteCity>
     private lateinit var progressbar: ProgressBar
+    private lateinit var temp: String
 
     companion object {
         val list: MutableLiveData<List<FavouriteCity>> = MutableLiveData()
@@ -56,6 +59,8 @@ class FavouriteFragment : Fragment() {
         val root: View = binding.root
 
         setupUI()
+
+        temp = getFromSharedPrefs()
         favouriteListToAdapter = ArrayList()
 
         favouriteViewModel.list.observe(viewLifecycleOwner, Observer {
@@ -91,8 +96,19 @@ class FavouriteFragment : Fragment() {
 
     fun updateFavouriteCity() {
         favouriteList.forEach {
+            val finalTemp = when (temp) {
+                "C" -> {
+                    "metric"
+                }
+                "F" -> {
+                    "imperial"
+                }
+                else -> {
+                    ""
+                }
+            }
             Call.callByCityId(
-                "metric",
+                finalTemp,
                 it.id.toString(),
                 requireContext(),
                 this@FavouriteFragment::callBackFromSearch
@@ -139,6 +155,17 @@ class FavouriteFragment : Fragment() {
                 progressbar.visibility = View.INVISIBLE
             }
         }
+    }
+
+    fun getFromSharedPrefs(): String {
+        val sharedPref: SharedPreferences =
+            requireContext().getSharedPreferences(
+                getString(R.string.shared_settings),
+                Context.MODE_PRIVATE
+            )
+        val temp = sharedPref.getString("temp", "")!!
+        return temp
+
     }
 
     override fun onDestroyView() {
