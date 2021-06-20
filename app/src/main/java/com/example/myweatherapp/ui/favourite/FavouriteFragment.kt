@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -50,10 +51,8 @@ class FavouriteFragment : Fragment() {
 
         _binding = FragmentFavouriteBinding.inflate(inflater, container, false)
         val root: View = binding.root
-        progressbar = root.findViewById(R.id.progressBar)
-        rv = root.findViewById(R.id.rv)
-        rv.layoutManager = LinearLayoutManager(root.context)
-        rv.setHasFixedSize(true)
+
+        setupUI()
 
         favouriteViewModel.list.observe(viewLifecycleOwner, Observer {
             adapter = FavouriteAdapter(
@@ -64,7 +63,7 @@ class FavouriteFragment : Fragment() {
             rv.adapter = adapter
             adapter.notifyDataSetChanged()
         })
-        progressbar.visibility = View.VISIBLE
+
         val db: FavouriteCityDao? = DatabaseInstance.getInstance(this.requireContext())?.weatherDao
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
@@ -79,6 +78,14 @@ class FavouriteFragment : Fragment() {
         return root
     }
 
+    private fun setupUI() {
+        progressbar = binding.progressBar
+        rv = binding.rv
+        rv.layoutManager = LinearLayoutManager(requireContext())
+        rv.setHasFixedSize(true)
+        progressbar.visibility = View.VISIBLE
+    }
+
     fun deleteItem(position: Int) {
         val db: FavouriteCityDao? = DatabaseInstance.getInstance(this.requireContext())?.weatherDao
         val element = favouriteList[position]
@@ -89,10 +96,17 @@ class FavouriteFragment : Fragment() {
                 favouriteList = db?.getAllFavouriteCities()!!
                 list.postValue(favouriteList)
                 Log.d("SUCESSO REMOÇÃO", db?.getAllFavouriteCities().toString())
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Removido dos Favoritos",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
             }
             withContext(Dispatchers.Main) {
                 progressbar.visibility = View.INVISIBLE
-                rv.adapter?.notifyItemChanged(position)
             }
         }
     }

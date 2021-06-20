@@ -33,7 +33,7 @@ class WeatherAdapter(
         val city = cities[position]
 
         holder.fileName.text = city.name
-        holder.temp.text = "${city.main.temp} ºC"
+        holder.temp.text = city.main.temp
         val icon: String = city.weather[0].icon
         Glide.with(context).load("http://openweathermap.org/img/wn/$icon@4x.png").into(holder.img)
 

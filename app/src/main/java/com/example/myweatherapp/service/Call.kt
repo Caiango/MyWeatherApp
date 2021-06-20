@@ -8,8 +8,8 @@ import retrofit2.Response
 
 class Call {
     companion object {
-        fun call(cidade: String, context: Context, callback: (Resp?, Context, Boolean) -> Unit) {
-            val call = RetrofitInitializer().repoService().getWeather(cidade)
+        fun call(temp: String, cidade: String, context: Context, callback: (Resp?, Context, Boolean) -> Unit) {
+            val call = RetrofitInitializer().repoService().getWeather(cidade, temp)
 
             call.enqueue(object : Callback<Resp> {
                 override fun onResponse(call: retrofit2.Call<Resp>, resp: Response<Resp>) {

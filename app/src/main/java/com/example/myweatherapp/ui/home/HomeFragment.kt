@@ -1,6 +1,7 @@
 package com.example.myweatherapp.ui.home
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
@@ -43,6 +44,7 @@ class HomeFragment : Fragment() {
     private lateinit var recycler: RecyclerView
     private lateinit var adapter: WeatherAdapter
     private lateinit var cityList: List<Lista>
+    private lateinit var temp: String
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,15 +56,19 @@ class HomeFragment : Fragment() {
 
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
-        btnSearch = root.findViewById(R.id.btnSearch)
-        progressbar = root.findViewById(R.id.progressBar)
-        inputCity = root.findViewById(R.id.txtxInputCity)
-        recycler = root.findViewById(R.id.rv)
-        recycler.layoutManager = LinearLayoutManager(root.context)
-        recycler.setHasFixedSize(true)
+        setupUI()
         setListeners(root.context)
-
+        temp = getFromSharedPrefs()
         return root
+    }
+
+    private fun setupUI() {
+        btnSearch = binding.btnSearch
+        progressbar = binding.progressBar
+        inputCity = binding.txtxInputCity
+        recycler = binding.rv
+        recycler.layoutManager = LinearLayoutManager(requireContext())
+        recycler.setHasFixedSize(true)
     }
 
     private fun setListeners(context: Context) {
@@ -72,8 +78,19 @@ class HomeFragment : Fragment() {
                 if (cidade.equals("")) {
                     inputCity.editText?.error = "Insira uma Cidade"
                 } else {
+                    val finalTemp = when (temp) {
+                        "C" -> {
+                            "metric"
+                        }
+                        "F" -> {
+                            "imperial"
+                        }
+                        else -> {
+                            ""
+                        }
+                    }
                     progressbar.visibility = View.VISIBLE
-                    Call.call(cidade, context, this::callBackFromSearch)
+                    Call.call(finalTemp, cidade, context, this::callBackFromSearch)
                 }
             } else {
                 Toast.makeText(context, "Sem conexão com internet", Toast.LENGTH_LONG).show()
@@ -107,6 +124,14 @@ class HomeFragment : Fragment() {
                     )
                 )
                 Log.d("SUCESSO INSERÇÃO", db?.getAllFavouriteCities().toString())
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Favoritado",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
             }
             withContext(Dispatchers.Main) {
                 progressbar.visibility = View.INVISIBLE
@@ -131,6 +156,16 @@ class HomeFragment : Fragment() {
         return result
     }
 
+    fun getFromSharedPrefs(): String {
+        val sharedPref: SharedPreferences =
+            requireContext().getSharedPreferences(
+                getString(R.string.shared_settings),
+                Context.MODE_PRIVATE
+            )
+        val temp = sharedPref.getString("temp", "")!!
+        return temp
+
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

@@ -35,7 +35,7 @@ class FavouriteAdapter(
         val city = cities[position]
 
         holder.fileName.text = city.name
-        holder.temp.text = "${city.temp} ºC"
+        holder.temp.text = city.temp
         val icon: String = city.img
         Glide.with(context).load("http://openweathermap.org/img/wn/$icon@4x.png").into(holder.img)
 

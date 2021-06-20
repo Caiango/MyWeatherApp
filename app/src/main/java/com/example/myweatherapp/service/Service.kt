@@ -11,7 +11,7 @@ interface Service {
     @GET("find?")
     fun getWeather(
         @Query("q") city: String?,
-        @Query("units") units: String? = "metric",
+        @Query("units") units: String?,
         @Query("APPID") key: String = Constants.key
     ): Call<Resp>
 }
