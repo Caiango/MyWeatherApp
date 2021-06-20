@@ -29,9 +29,3 @@ abstract class DatabaseInstance : RoomDatabase() {
         }
     }
 }
-
-//    class Insert(val itemDao: FavouriteCityDao): AsyncTask<FavouriteCity, Unit, Unit>(){
-//        override fun doInBackground(vararg params: FavouriteCity?) {
-//            params[0]?.let { itemDao.insert(it) }
-//        }
-//    }

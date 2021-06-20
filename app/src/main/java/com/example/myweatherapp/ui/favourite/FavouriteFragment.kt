@@ -1,5 +1,6 @@
 package com.example.myweatherapp.ui.favourite
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -14,11 +15,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.myweatherapp.R
+import com.example.myweatherapp.data.RespFromID
 import com.example.myweatherapp.databinding.FragmentFavouriteBinding
 import com.example.myweatherapp.model.DatabaseInstance
 import com.example.myweatherapp.model.FavouriteCity
 import com.example.myweatherapp.model.FavouriteCityDao
+import com.example.myweatherapp.service.Call
 import com.example.myweatherapp.ui.adapter.FavouriteAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,6 +33,7 @@ class FavouriteFragment : Fragment() {
     private lateinit var rv: RecyclerView
     private lateinit var adapter: FavouriteAdapter
     private lateinit var favouriteList: List<FavouriteCity>
+    private lateinit var favouriteListToAdapter: ArrayList<FavouriteCity>
     private lateinit var progressbar: ProgressBar
 
     companion object {
@@ -53,6 +56,7 @@ class FavouriteFragment : Fragment() {
         val root: View = binding.root
 
         setupUI()
+        favouriteListToAdapter = ArrayList()
 
         favouriteViewModel.list.observe(viewLifecycleOwner, Observer {
             adapter = FavouriteAdapter(
@@ -68,10 +72,9 @@ class FavouriteFragment : Fragment() {
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 favouriteList = db?.getAllFavouriteCities()!!
+                updateFavouriteCity()
                 withContext(Dispatchers.Main) {
-                    list.postValue(favouriteList)
                     Log.d("SUCESSO CONSULTA", db?.getAllFavouriteCities().toString())
-                    progressbar.visibility = View.INVISIBLE
                 }
             }
         }
@@ -86,15 +89,42 @@ class FavouriteFragment : Fragment() {
         progressbar.visibility = View.VISIBLE
     }
 
+    fun updateFavouriteCity() {
+        favouriteList.forEach {
+            Call.callByCityId(
+                "metric",
+                it.id.toString(),
+                requireContext(),
+                this@FavouriteFragment::callBackFromSearch
+            )
+        }
+    }
+
+    fun callBackFromSearch(response: RespFromID?, context: Context, success: Boolean) {
+        if (success) {
+            val cidade = FavouriteCity(
+                response?.id!!.toInt(),
+                response.name,
+                response.main.temp,
+                response.weather[0].icon
+            )
+            favouriteListToAdapter.add(cidade)
+            list.postValue(favouriteListToAdapter)
+        } else {
+            Toast.makeText(context, "Falha, tente novamente", Toast.LENGTH_LONG).show()
+        }
+        progressbar.visibility = View.INVISIBLE
+    }
+
     fun deleteItem(position: Int) {
         val db: FavouriteCityDao? = DatabaseInstance.getInstance(this.requireContext())?.weatherDao
-        val element = favouriteList[position]
+        val element = favouriteListToAdapter[position]
         progressbar.visibility = View.VISIBLE
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 db?.delete(element)
-                favouriteList = db?.getAllFavouriteCities()!!
-                list.postValue(favouriteList)
+                favouriteListToAdapter = db?.getAllFavouriteCities()!! as ArrayList<FavouriteCity>
+                list.postValue(favouriteListToAdapter)
                 Log.d("SUCESSO REMOÇÃO", db?.getAllFavouriteCities().toString())
                 withContext(Dispatchers.Main) {
                     Toast.makeText(

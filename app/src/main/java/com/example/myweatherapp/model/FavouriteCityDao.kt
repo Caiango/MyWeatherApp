@@ -10,7 +10,7 @@ interface FavouriteCityDao {
     @Delete
     suspend fun delete(city: FavouriteCity)
 
-    @Query("SELECT * FROM favouritesCities")
+    @Query("SELECT * FROM favouritesCities ORDER BY name ASC")
     suspend fun getAllFavouriteCities(): List<FavouriteCity>
 
     @Query("DELETE FROM favouritesCities")

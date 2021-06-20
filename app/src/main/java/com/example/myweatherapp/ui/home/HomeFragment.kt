@@ -90,7 +90,7 @@ class HomeFragment : Fragment() {
                         }
                     }
                     progressbar.visibility = View.VISIBLE
-                    Call.call(finalTemp, cidade, context, this::callBackFromSearch)
+                    Call.callByCityName(finalTemp, cidade, context, this::callBackFromSearch)
                 }
             } else {
                 Toast.makeText(context, "Sem conexão com internet", Toast.LENGTH_LONG).show()
