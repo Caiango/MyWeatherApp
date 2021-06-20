@@ -26,6 +26,7 @@ import com.example.myweatherapp.model.FavouriteCity
 import com.example.myweatherapp.model.FavouriteCityDao
 import com.example.myweatherapp.service.Call
 import com.example.myweatherapp.ui.adapter.WeatherAdapter
+import com.example.myweatherapp.utils.SharedPrefsConfig
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,6 +46,7 @@ class HomeFragment : Fragment() {
     private lateinit var adapter: WeatherAdapter
     private lateinit var cityList: List<Lista>
     private lateinit var temp: String
+    private lateinit var shared: SharedPrefsConfig
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,7 +60,8 @@ class HomeFragment : Fragment() {
         val root: View = binding.root
         setupUI()
         setListeners(root.context)
-        temp = getFromSharedPrefs()
+        shared = SharedPrefsConfig(requireContext())
+        temp = shared.getFromSharedPrefs()
         return root
     }
 
@@ -98,7 +101,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    fun callBackFromSearch(response: Resp?, context: Context, success: Boolean) {
+    private fun callBackFromSearch(response: Resp?, context: Context, success: Boolean) {
         if (success) {
             cityList = response!!.list
             adapter = WeatherAdapter(response.list, this::setFavourite, context)
@@ -109,7 +112,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    fun setFavourite(position: Int) {
+    private fun setFavourite(position: Int) {
         val db: FavouriteCityDao? = DatabaseInstance.getInstance(this.requireContext())?.weatherDao
         val element = cityList[position]
         progressbar.visibility = View.VISIBLE
@@ -123,11 +126,11 @@ class HomeFragment : Fragment() {
                         element.weather[0].icon
                     )
                 )
-                Log.d("SUCESSO INSERÇÃO", db?.getAllFavouriteCities().toString())
+                Log.d(getString(R.string.success), db?.getAllFavouriteCities().toString())
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         requireContext(),
-                        "Favoritado",
+                        getString(R.string.favourited),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -139,7 +142,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    fun isInternetAvailable(context: Context): Boolean {
+    private fun isInternetAvailable(context: Context): Boolean {
         var result = false
 
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE)
@@ -154,17 +157,6 @@ class HomeFragment : Fragment() {
         }
 
         return result
-    }
-
-    fun getFromSharedPrefs(): String {
-        val sharedPref: SharedPreferences =
-            requireContext().getSharedPreferences(
-                getString(R.string.shared_settings),
-                Context.MODE_PRIVATE
-            )
-        val temp = sharedPref.getString("temp", "")!!
-        return temp
-
     }
 
     override fun onDestroyView() {

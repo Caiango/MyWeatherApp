@@ -13,4 +13,8 @@
     <string name="settings">Settings</string>
     <string name="shared_settings">SETTINGS</string>
     <string name="digite_uma_cidade">Digite uma cidade</string>
+    <string name="success">SUCESSO REMOÇÃO</string>
+    <string name="removed_from_fav">Removido dos Favoritos</string>
+    <string name="failed">Falha, tente novamente</string>
+    <string name="favourited">Favoritado</string>
 </resources>

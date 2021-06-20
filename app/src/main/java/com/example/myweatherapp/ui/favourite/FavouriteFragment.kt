@@ -1,7 +1,6 @@
 package com.example.myweatherapp.ui.favourite
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,7 +10,6 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,6 +22,7 @@ import com.example.myweatherapp.model.FavouriteCity
 import com.example.myweatherapp.model.FavouriteCityDao
 import com.example.myweatherapp.service.Call
 import com.example.myweatherapp.ui.adapter.FavouriteAdapter
+import com.example.myweatherapp.utils.SharedPrefsConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,17 +33,17 @@ class FavouriteFragment : Fragment() {
     private var _binding: FragmentFavouriteBinding? = null
     private lateinit var rv: RecyclerView
     private lateinit var adapter: FavouriteAdapter
-    private lateinit var favouriteList: List<FavouriteCity>
+    private lateinit var favouriteListFromRoom: List<FavouriteCity>
     private lateinit var favouriteListToAdapter: ArrayList<FavouriteCity>
     private lateinit var progressbar: ProgressBar
     private lateinit var temp: String
+    private lateinit var db: FavouriteCityDao
+    private lateinit var shared: SharedPrefsConfig
 
     companion object {
         val list: MutableLiveData<List<FavouriteCity>> = MutableLiveData()
     }
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -57,29 +56,30 @@ class FavouriteFragment : Fragment() {
 
         _binding = FragmentFavouriteBinding.inflate(inflater, container, false)
         val root: View = binding.root
+        db = DatabaseInstance.getInstance(this.requireContext())?.weatherDao!!
+        shared = SharedPrefsConfig(requireContext())
 
         setupUI()
 
-        temp = getFromSharedPrefs()
+        temp = shared.getFromSharedPrefs()
         favouriteListToAdapter = ArrayList()
 
-        favouriteViewModel.list.observe(viewLifecycleOwner, Observer {
+        favouriteViewModel.list.observe(viewLifecycleOwner, {
             adapter = FavouriteAdapter(
                 it,
-                this@FavouriteFragment::deleteItem,
+                this@FavouriteFragment::deleteItemCallback,
                 root.context.applicationContext
             )
             rv.adapter = adapter
             adapter.notifyDataSetChanged()
         })
 
-        val db: FavouriteCityDao? = DatabaseInstance.getInstance(this.requireContext())?.weatherDao
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                favouriteList = db?.getAllFavouriteCities()!!
+                favouriteListFromRoom = db.getAllFavouriteCities()
                 updateFavouriteCity()
                 withContext(Dispatchers.Main) {
-                    Log.d("SUCESSO CONSULTA", db?.getAllFavouriteCities().toString())
+                    Log.d("SUCESSO CONSULTA", db.getAllFavouriteCities().toString())
                 }
             }
         }
@@ -94,8 +94,8 @@ class FavouriteFragment : Fragment() {
         progressbar.visibility = View.VISIBLE
     }
 
-    fun updateFavouriteCity() {
-        favouriteList.forEach {
+    private fun updateFavouriteCity() {
+        favouriteListFromRoom.forEach {
             val finalTemp = when (temp) {
                 "C" -> {
                     "metric"
@@ -116,7 +116,7 @@ class FavouriteFragment : Fragment() {
         }
     }
 
-    fun callBackFromSearch(response: RespFromID?, context: Context, success: Boolean) {
+    private fun callBackFromSearch(response: RespFromID?, context: Context, success: Boolean) {
         if (success) {
             val cidade = FavouriteCity(
                 response?.id!!.toInt(),
@@ -125,27 +125,26 @@ class FavouriteFragment : Fragment() {
                 response.weather[0].icon
             )
             favouriteListToAdapter.add(cidade)
-            list.postValue(favouriteListToAdapter)
         } else {
-            Toast.makeText(context, "Falha, tente novamente", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, getString(R.string.failed), Toast.LENGTH_LONG).show()
         }
+        list.postValue(favouriteListToAdapter)
         progressbar.visibility = View.INVISIBLE
     }
 
-    fun deleteItem(position: Int) {
-        val db: FavouriteCityDao? = DatabaseInstance.getInstance(this.requireContext())?.weatherDao
+    private fun deleteItemCallback(position: Int) {
         val element = favouriteListToAdapter[position]
         progressbar.visibility = View.VISIBLE
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                db?.delete(element)
-                favouriteListToAdapter = db?.getAllFavouriteCities()!! as ArrayList<FavouriteCity>
+                db.delete(element)
+                favouriteListToAdapter = db.getAllFavouriteCities() as ArrayList<FavouriteCity>
                 list.postValue(favouriteListToAdapter)
-                Log.d("SUCESSO REMOÇÃO", db?.getAllFavouriteCities().toString())
+                Log.d(getString(R.string.success), db.getAllFavouriteCities().toString())
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         requireContext(),
-                        "Removido dos Favoritos",
+                        getString(R.string.removed_from_fav),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -155,17 +154,6 @@ class FavouriteFragment : Fragment() {
                 progressbar.visibility = View.INVISIBLE
             }
         }
-    }
-
-    fun getFromSharedPrefs(): String {
-        val sharedPref: SharedPreferences =
-            requireContext().getSharedPreferences(
-                getString(R.string.shared_settings),
-                Context.MODE_PRIVATE
-            )
-        val temp = sharedPref.getString("temp", "")!!
-        return temp
-
     }
 
     override fun onDestroyView() {
