@@ -132,11 +132,9 @@ class HomeFragment : Fragment() {
                         getString(R.string.favourited),
                         Toast.LENGTH_LONG
                     ).show()
+                    progressbar.visibility = View.INVISIBLE
                 }
 
-            }
-            withContext(Dispatchers.Main) {
-                progressbar.visibility = View.INVISIBLE
             }
         }
     }
