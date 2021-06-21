@@ -64,9 +64,9 @@ class FavouriteFragment : Fragment() {
         temp = shared.getFromSharedPrefs()
         favouriteListToAdapter = ArrayList()
 
-        favouriteViewModel.list.observe(viewLifecycleOwner, {
+        favouriteViewModel.list.observe(viewLifecycleOwner, { it ->
             adapter = FavouriteAdapter(
-                it,
+                it.sortedBy { it.name },
                 this@FavouriteFragment::deleteItemCallback,
                 root.context.applicationContext
             )
