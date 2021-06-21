@@ -140,7 +140,7 @@ class FavouriteFragment : Fragment() {
                 db.delete(element)
                 favouriteListToAdapter = db.getAllFavouriteCities() as ArrayList<FavouriteCity>
                 list.postValue(favouriteListToAdapter)
-                Log.d(getString(R.string.success), db.getAllFavouriteCities().toString())
+                Log.d(getString(R.string.removed_success), db.getAllFavouriteCities().toString())
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         requireContext(),

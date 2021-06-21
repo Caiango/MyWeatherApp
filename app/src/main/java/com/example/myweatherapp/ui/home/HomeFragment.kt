@@ -1,7 +1,6 @@
 package com.example.myweatherapp.ui.home
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle

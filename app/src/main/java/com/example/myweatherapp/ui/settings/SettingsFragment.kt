@@ -21,8 +21,6 @@ class SettingsFragment : Fragment() {
     lateinit var sharedPref: SharedPreferences
     lateinit var editor: SharedPreferences.Editor
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
     private lateinit var btn: Button
     private lateinit var radioC: RadioButton
@@ -85,7 +83,7 @@ class SettingsFragment : Fragment() {
             putString("temp", temp)
             apply()
         }
-        Toast.makeText(context, "SALVO", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, getString(R.string.saved), Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroyView() {
