@@ -72,6 +72,7 @@ class FavouriteFragment : Fragment() {
             )
             rv.adapter = adapter
             adapter.notifyDataSetChanged()
+            progressbar.visibility = View.INVISIBLE
         })
 
         lifecycleScope.launch {
@@ -133,7 +134,8 @@ class FavouriteFragment : Fragment() {
     }
 
     private fun deleteItemCallback(position: Int) {
-        val element = favouriteListToAdapter[position]
+        var organizedList = favouriteListToAdapter.sortedBy { it.name }
+        val element = organizedList[position]
         progressbar.visibility = View.VISIBLE
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
