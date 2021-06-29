@@ -72,7 +72,6 @@ class FavouriteFragment : Fragment() {
             )
             rv.adapter = adapter
             adapter.notifyDataSetChanged()
-            progressbar.visibility = View.INVISIBLE
         })
 
         lifecycleScope.launch {
@@ -81,6 +80,7 @@ class FavouriteFragment : Fragment() {
                 updateFavouriteCity()
                 withContext(Dispatchers.Main) {
                     Log.d("SUCESSO CONSULTA", db.getAllFavouriteCities().toString())
+                    progressbar.visibility = View.INVISIBLE
                 }
             }
         }
